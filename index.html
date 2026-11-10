@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Rechner</title>
+<meta name="theme-color" content="#0f1420">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<style>
+  :root{--hg:#0f1420;--taste:#1b2233;--taste2:#232c42;--text:#f2f5fb;--leise:#8e99b3;--akzent:#38bdf8;--akzentText:#06202e;--rand:rgba(255,255,255,.06)}
+  @media (prefers-color-scheme: light){
+    :root{--hg:#f3f5f9;--taste:#ffffff;--taste2:#e6ebf3;--text:#131a26;--leise:#6b7689;--akzent:#0284c7;--akzentText:#ffffff;--rand:rgba(0,0,0,.06)}
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0;background:var(--hg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+  #app{height:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;padding:10px 14px 16px}
+  .kopf{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+  .kopf h1{font-size:17px;font-weight:600;margin:0;color:var(--leise)}
+  .kopf button{border:0;background:var(--taste);color:var(--text);border-radius:12px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer}
+  #anzeige{flex:1;min-height:120px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;padding:8px 6px 14px;overflow:hidden;cursor:pointer}
+  #ausdruck{font-size:30px;color:var(--leise);word-break:break-all;text-align:right;line-height:1.25;max-height:5em;overflow:auto}
+  #ergebnis{font-size:54px;font-weight:600;line-height:1.15;text-align:right;word-break:break-all;min-height:1.15em}
+  #ergebnis.vorschau{color:var(--leise);font-weight:400;font-size:34px}
+  #ergebnis.fehler{font-size:22px;color:#f87171;font-weight:500}
+  #tasten{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  #tasten button{height:clamp(52px,9.2vh,78px);border:1px solid var(--rand);border-radius:20px;background:var(--taste);color:var(--text);font:inherit;font-size:26px;cursor:pointer;touch-action:manipulation}
+  #tasten button.op{background:var(--taste2);color:var(--akzent);font-size:28px}
+  #tasten button.gleich{background:var(--akzent);color:var(--akzentText);font-weight:600}
+  #tasten button:active{filter:brightness(1.25);transform:scale(.97)}
+  #verlauf{position:fixed;inset:0;background:var(--hg);display:none;flex-direction:column;padding:10px 14px 16px;max-width:560px;margin:0 auto}
+  #verlauf.offen{display:flex}
+  #liste{flex:1;overflow:auto;margin-top:8px}
+  .eintrag{padding:12px 6px;border-bottom:1px solid var(--rand);text-align:right;cursor:pointer}
+  .eintrag small{display:block;color:var(--leise);font-size:15px;word-break:break-all}
+  .eintrag b{font-size:24px;font-weight:600}
+  .leer{color:var(--leise);text-align:center;padding:40px 0}
+  #hinweis{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--text);color:var(--hg);padding:9px 16px;border-radius:999px;font-size:14px;opacity:0;transition:.2s;pointer-events:none}
+  #hinweis.an{opacity:1}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="kopf"><h1>Rechner</h1><button id="bVerlauf" type="button">🕘 Verlauf</button></div>
+  <div id="anzeige" title="Tippen kopiert das Ergebnis">
+    <div id="ausdruck"></div>
+    <div id="ergebnis">0</div>
+  </div>
+  <div id="tasten">
+    <button data-k="C" class="op">C</button><button data-k="back" class="op" aria-label="Löschen">⌫</button><button data-k="%" class="op">%</button><button data-k="÷" class="op">÷</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="×" class="op">×</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="−" class="op">−</button>
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="+" class="op">+</button>
+    <button data-k="()" class="op">( )</button><button data-k="0">0</button><button data-k=",">,</button><button data-k="=" class="gleich">=</button>
+  </div>
+</div>
+<div id="verlauf">
+  <div class="kopf"><button id="bZurueck" type="button">← Zurück</button><button id="bLeeren" type="button">Verlauf löschen</button></div>
+  <div id="liste"></div>
+</div>
+<div id="hinweis"></div>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+let ausdruck="", fertig=false, verlauf=[];
+try{ verlauf=JSON.parse(localStorage.getItem("rechner-verlauf"))||[]; }catch(e){}
+
+/* ---------- Rechnen (eigener Parser, kein eval) ---------- */
+function berechne(text){
+  let s=text.replace(/[+−×÷(,]+$/,"");                       // unfertiges Ende abschneiden
+  const offen=(s.match(/\(/g)||[]).length-(s.match(/\)/g)||[]).length;
+  if(offen<0) throw new Error("Klammer"); s+=")".repeat(offen);
+  const tok=s.match(/\d+(?:,\d*)?|[+−×÷()%]/g)||[]; let i=0;
+  if(!tok.length) return null;
+  const faktor=()=>{
+    if(tok[i]==="−"){ i++; const f=faktor(); return {v:-f.v,roh:-f.roh,pz:f.pz}; }
+    let v;
+    if(tok[i]==="("){ i++; v=summe(); if(tok[i]!==")") throw new Error("Klammer"); i++; }
+    else if(/^\d/.test(tok[i]||"")){ v=parseFloat(tok[i++].replace(",",".")); }
+    else throw new Error("Eingabe");
+    let roh=v, pz=false;
+    while(tok[i]==="%"){ i++; roh=v; v=v/100; pz=true; }
+    return {v,roh,pz};
+  };
+  const produkt=()=>{
+    let f=faktor(), v=f.v, pz=f.pz, roh=f.roh;
+    for(;;){
+      if(tok[i]==="×"){ i++; v*=faktor().v; pz=false; }
+      else if(tok[i]==="÷"){ i++; const d=faktor().v; if(d===0) throw new Error("null"); v/=d; pz=false; }
+      else if(tok[i]==="("||(/^\d/.test(tok[i]||""))){ v*=faktor().v; pz=false; }   // 2(3+4) = 2×(3+4)
+      else break;
+    }
+    return {v,roh,pz};
+  };
+  function summe(){
+    let l=produkt().v;
+    while(tok[i]==="+"||tok[i]==="−"){
+      const op=tok[i++], r=produkt();
+      const w=r.pz ? l*r.roh/100 : r.v;                          // 200 + 10 % = 220
+      l = op==="+" ? l+w : l-w;
+    }
+    return l;
+  }
+  const erg=summe(); if(i<tok.length) throw new Error("Eingabe");
+  if(!isFinite(erg)) throw new Error("gross");
+  return Number(erg.toPrecision(12));
+}
+window.__rechne=berechne;
+
+/* ---------- Anzeige ---------- */
+const gruppe=z=>z.replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const schoen=t=>t.replace(/(\d+)(,\d*)?/g,(m,g,d)=>gruppe(g)+(d||"")).replace(/([+−×÷])/g," $1 ");
+function zahlText(x){                                           // Zahl -> "1234,5" (ohne Tausenderpunkte)
+  if(Math.abs(x)>=1e15) return null;
+  let t=x.toLocaleString("en-US",{useGrouping:false,maximumFractionDigits:10});
+  return t.replace("-","−").replace(".",",");
+}
+function zeigen(){
+  const a=$("ausdruck"), e=$("ergebnis"); e.className="";
+  if(fertig){ a.textContent=schoen(fertig)+" ="; e.textContent=schoen(ausdruck); }
+  else{
+    a.textContent=schoen(ausdruck);
+    let v=null; try{ v=berechne(ausdruck); }catch(_){}
+    const nurZahl=/^−?\d+(,\d*)?$/.test(ausdruck);
+    if(!ausdruck){ e.textContent="0"; }
+    else if(v!==null&&!nurZahl&&zahlText(v)!==null){ e.textContent="= "+schoen(zahlText(v)); e.className="vorschau"; }
+    else e.textContent="";
+  }
+  const n=a.textContent.length; a.style.fontSize=(n>40?20:n>24?24:30)+"px";
+  const m=e.textContent.length; if(!e.className) e.style.fontSize=(m>16?32:m>11?42:54)+"px"; else e.style.fontSize="";
+  a.scrollTop=a.scrollHeight;
+}
+function fehler(t){ const e=$("ergebnis"); e.className="fehler"; e.style.fontSize=""; e.textContent=t; }
+
+/* ---------- Eingabe ---------- */
+const letztes=()=>ausdruck.slice(-1);
+const istOp=c=>"+−×÷".includes(c)&&c!=="";
+function taste(k){
+  if(k==="C"){ ausdruck=""; fertig=false; return zeigen(); }
+  if(k==="="){ return gleich(); }
+  if(fertig){                                                    // nach "=": Zahl beginnt neu, Rechenzeichen rechnet weiter
+    if(/[\d,]/.test(k)||k==="()") ausdruck="";
+    fertig=false;
+  }
+  const l=letztes();
+  if(k==="back"){ ausdruck=ausdruck.slice(0,-1); }
+  else if(/\d/.test(k)){
+    if(l===")"||l==="%") ausdruck+="×";
+    if(/(^|[^\d,])0$/.test(ausdruck)) ausdruck=ausdruck.slice(0,-1);   // führende Null ersetzen
+    if((ausdruck.match(/\d+(,\d*)?$/)||[""])[0].replace(",","").length>=15) return;
+    ausdruck+=k;
+  }
+  else if(k===","){
+    const z=(ausdruck.match(/\d+(,\d*)?$/)||[""])[0];
+    if(z.includes(",")) return;
+    if(!z){ if(l===")"||l==="%") ausdruck+="×"; ausdruck+="0"; }
+    ausdruck+=",";
+  }
+  else if(istOp(k)){
+    if(l===",") ausdruck=ausdruck.slice(0,-1);
+    const l2=letztes();
+    if(!ausdruck||l2==="("){ if(k==="−") ausdruck+="−"; }
+    else if(istOp(l2)){ if(ausdruck.length>1&&ausdruck.slice(-2,-1)!=="(") ausdruck=ausdruck.slice(0,-1)+k; }
+    else ausdruck+=k;
+  }
+  else if(k==="%"){ if(/[\d)]/.test(l)) ausdruck+="%"; }
+  else if(k==="()"){
+    const offen=(ausdruck.match(/\(/g)||[]).length-(ausdruck.match(/\)/g)||[]).length;
+    if(offen>0&&/[\d)%]/.test(l)) ausdruck+=")";
+    else{ if(l===",") ausdruck=ausdruck.slice(0,-1); if(/[\d)%]/.test(letztes())) ausdruck+="×"; ausdruck+="("; }
+  }
+  zeigen();
+}
+function gleich(){
+  if(fertig||!ausdruck) return;
+  let v;
+  try{ v=berechne(ausdruck); }
+  catch(e){ return fehler(e.message==="null"?"Durch 0 teilen geht nicht":e.message==="gross"?"Zahl zu groß":"Eingabe unvollständig"); }
+  if(v===null) return;
+  const t=zahlText(v); if(t===null) return fehler("Zahl zu groß");
+  let s=ausdruck.replace(/[+−×÷(,]+$/,""); const offen=(s.match(/\(/g)||[]).length-(s.match(/\)/g)||[]).length; s+=")".repeat(Math.max(0,offen));
+  if(s!==t){ verlauf.unshift({a:s,e:t}); verlauf=verlauf.slice(0,60); try{localStorage.setItem("rechner-verlauf",JSON.stringify(verlauf));}catch(e){} }
+  fertig=s; ausdruck=t; zeigen();
+}
+$("tasten").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) taste(b.dataset.k); });
+let lang=null; const bk=document.querySelector('[data-k="back"]');                 // ⌫ lange halten = alles löschen
+bk.addEventListener("pointerdown",()=>{ lang=setTimeout(()=>taste("C"),550); });
+["pointerup","pointerleave","pointercancel"].forEach(n=>bk.addEventListener(n,()=>clearTimeout(lang)));
+
+window.addEventListener("keydown",e=>{
+  const k=e.key, map={"*":"×","x":"×","/":"÷",":":"÷","-":"−",".":",","Enter":"=","Backspace":"back","Escape":"C","Delete":"C"};
+  let t=null;
+  if(/^\d$/.test(k)||"+,%=".includes(k)) t=k; else if(map[k]) t=map[k];
+  else if(k==="("||k===")"){ if(fertig){ausdruck="";fertig=false;} if(k==="("){ if(/[\d)%]/.test(letztes()))ausdruck+="×"; ausdruck+="("; } else if(/[\d)%]/.test(letztes())) ausdruck+=")"; zeigen(); e.preventDefault(); return; }
+  if(t){ e.preventDefault(); taste(t); }
+});
+
+/* ---------- Kopieren und Verlauf ---------- */
+function hinweis(t){ const h=$("hinweis"); h.textContent=t; h.classList.add("an"); setTimeout(()=>h.classList.remove("an"),1500); }
+$("anzeige").addEventListener("click",async()=>{
+  let t=fertig?ausdruck:null; if(!t){ try{ const v=berechne(ausdruck); if(v!==null) t=zahlText(v); }catch(e){} }
+  if(!t) return;
+  try{ await navigator.clipboard.writeText(schoen(t).replace("−","-")); hinweis("Ergebnis kopiert"); }catch(e){}
+});
+function listeZeigen(){
+  const l=$("liste");
+  if(!verlauf.length){ l.innerHTML='<div class="leer">Noch keine Rechnungen</div>'; return; }
+  l.innerHTML=""; verlauf.forEach(v=>{ const d=document.createElement("div"); d.className="eintrag";
+    const s=document.createElement("small"); s.textContent=schoen(v.a)+" ="; const b=document.createElement("b"); b.textContent=schoen(v.e);
+    d.append(s,b); d.addEventListener("click",()=>{ ausdruck=v.e; fertig=false; $("verlauf").classList.remove("offen"); zeigen(); }); l.appendChild(d); });
+}
+$("bVerlauf").addEventListener("click",()=>{ listeZeigen(); $("verlauf").classList.add("offen"); });
+$("bZurueck").addEventListener("click",()=>$("verlauf").classList.remove("offen"));
+$("bLeeren").addEventListener("click",()=>{ verlauf=[]; try{localStorage.removeItem("rechner-verlauf");}catch(e){} listeZeigen(); });
+zeigen();
+})();
+</script>
+</body>
+</html>
