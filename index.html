@@ -78,6 +78,7 @@
     <button class="ik" id="bVerlauf" title="Verlauf" aria-label="Verlauf"><svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 4v4h4"/><path d="M12 7.5V12l3 2"/></svg></button>
     <div class="rechts">
       <button class="ik" id="bWandler" title="Maßwandler" aria-label="Maßwandler öffnen"><svg viewBox="0 0 24 24"><rect x="2.5" y="7.5" width="19" height="9" rx="2" transform="rotate(-35 12 12)"/><path d="M8.2 9.6l1.3 1.8M10.7 7.8l1.9 2.6M13.2 6l1.3 1.8M7.9 13.4l1.3 1.8" transform="translate(-.4 1.2)"/></svg></button>
+      <button class="ik" id="bVib" title="Vibration an/aus" aria-label="Vibration beim Tippen"><svg viewBox="0 0 24 24"><rect x="8" y="3.5" width="8" height="17" rx="2"/><path d="M4.5 8v8M2 10v4M19.5 8v8M22 10v4"/></svg></button>
       <button class="ik" id="bWiss" title="Wissenschaftlich" aria-label="Wissenschaftliche Tasten"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M6.5 12.5l2 3.5 3.5-9h5.5"/></svg></button>
     </div>
   </div>
@@ -126,7 +127,16 @@
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
-let ausdruck="", fertig=false, verlauf=[], grad=true, wissAn=false;
+let ausdruck="", fertig=false, verlauf=[], grad=true, wissAn=false, vibAn=true;
+try{ vibAn=localStorage.getItem("rechner-vib")!=="0"; }catch(e){}
+/* ---------- Haptik: kurze Vibration beim Tippen ---------- */
+const kannVib = typeof navigator.vibrate==="function";
+function vib(ms){ if(vibAn&&kannVib){ try{ navigator.vibrate(ms); }catch(e){} } }
+document.addEventListener("pointerdown",e=>{
+  const b=e.target.closest("#tasten button,#wiss button,#wTasten button"); if(!b) return;
+  const k=b.dataset.k||b.dataset.w||"";
+  vib(k==="="||k==="C"?22:12);                                   // Gleich und Löschen etwas kräftiger
+},{passive:true});
 try{ verlauf=JSON.parse(localStorage.getItem("rechner-verlauf"))||[]; }catch(e){}
 try{ wissAn=localStorage.getItem("rechner-wiss")==="1"; grad=localStorage.getItem("rechner-rad")!=="1"; }catch(e){}
 
@@ -305,6 +315,13 @@ $("wiss").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b
 let lang=null; const bk=document.querySelector('#tasten [data-k="back"]');   // ⌫ lange halten = alles löschen
 bk.addEventListener("pointerdown",()=>{ lang=setTimeout(()=>taste("C"),550); });
 ["pointerup","pointerleave","pointercancel"].forEach(n=>bk.addEventListener(n,()=>clearTimeout(lang)));
+function vibZeigen(){ const b=$("bVib"); b.classList.toggle("an",vibAn&&kannVib); b.style.opacity=vibAn?"":".4"; b.title=kannVib?(vibAn?"Vibration an":"Vibration aus"):"Vibration wird von diesem Gerät nicht unterstützt"; }
+$("bVib").onclick=()=>{
+  if(!kannVib){ hinweis("Dieses Gerät unterstützt keine Vibration"); return; }
+  vibAn=!vibAn; try{localStorage.setItem("rechner-vib",vibAn?"1":"0");}catch(e){} vibZeigen();
+  if(vibAn) vib(30); hinweis(vibAn?"Vibration an":"Vibration aus");
+};
+vibZeigen();
 $("bWiss").onclick=()=>{ wissAn=!wissAn; try{localStorage.setItem("rechner-wiss",wissAn?"1":"0");}catch(e){} wissSetzen(); };
 
 window.addEventListener("keydown",e=>{
