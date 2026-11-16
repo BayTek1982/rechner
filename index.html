@@ -9,91 +9,193 @@
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <style>
-  :root{--hg:#0f1420;--taste:#1b2233;--taste2:#232c42;--text:#f2f5fb;--leise:#8e99b3;--akzent:#38bdf8;--akzentText:#06202e;--rand:rgba(255,255,255,.06)}
+  :root{--hg:#0f1420;--taste:#1b2233;--taste2:#232c42;--text:#f2f5fb;--leise:#8e99b3;--akzent:#38bdf8;--akzentText:#06202e;--rand:rgba(255,255,255,.06);--rot:#f87171}
   @media (prefers-color-scheme: light){
-    :root{--hg:#f3f5f9;--taste:#ffffff;--taste2:#e6ebf3;--text:#131a26;--leise:#6b7689;--akzent:#0284c7;--akzentText:#ffffff;--rand:rgba(0,0,0,.06)}
+    :root{--hg:#f3f5f9;--taste:#ffffff;--taste2:#e6ebf3;--text:#131a26;--leise:#6b7689;--akzent:#0284c7;--akzentText:#ffffff;--rand:rgba(0,0,0,.06);--rot:#dc2626}
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0;background:var(--hg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
-  #app{height:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;padding:10px 14px 16px}
-  .kopf{display:flex;justify-content:space-between;align-items:center;min-height:44px}
-  .kopf h1{font-size:17px;font-weight:600;margin:0;color:var(--leise)}
-  .kopf button{border:0;background:var(--taste);color:var(--text);border-radius:12px;padding:9px 14px;font:inherit;font-size:14px;cursor:pointer}
-  #anzeige{flex:1;min-height:120px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;padding:8px 6px 14px;overflow:hidden;cursor:pointer}
+  button,select{font:inherit;color:inherit}
+  .app{height:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;padding:8px 14px 16px}
+  .kopf{display:flex;justify-content:space-between;align-items:center;min-height:48px;gap:6px}
+  .kopf .rechts{display:flex;gap:4px}
+  .ik{width:44px;height:44px;border:0;background:none;border-radius:12px;color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.85}
+  .ik svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .ik.an{background:var(--taste2);color:var(--akzent);opacity:1}
+  .kopf h1{flex:1;margin:0 0 0 4px;font-size:20px;font-weight:600}
+  .knopf{border:0;background:var(--taste);color:var(--text);border-radius:12px;padding:9px 14px;font-size:14px;cursor:pointer}
+
+  /* Rechner */
+  #anzeige{flex:1;min-height:90px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;padding:6px 6px 12px;overflow:hidden;cursor:pointer}
   #ausdruck{font-size:30px;color:var(--leise);word-break:break-all;text-align:right;line-height:1.25;max-height:5em;overflow:auto}
   #ergebnis{font-size:54px;font-weight:600;line-height:1.15;text-align:right;word-break:break-all;min-height:1.15em}
   #ergebnis.vorschau{color:var(--leise);font-weight:400;font-size:34px}
-  #ergebnis.fehler{font-size:22px;color:#f87171;font-weight:500}
+  #ergebnis.fehler{font-size:22px;color:var(--rot);font-weight:500}
+  #modus{font-size:12px;color:var(--leise);align-self:flex-start;margin-bottom:auto;padding:2px 0}
+  #wiss{display:none;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:7px}
+  .wissAn #wiss{display:grid}
+  #wiss button{height:clamp(36px,5.6vh,50px);border:1px solid var(--rand);border-radius:14px;background:var(--hg);color:var(--text);font-size:16px;cursor:pointer}
+  #wiss button.deg{color:var(--akzent);font-weight:600;font-size:14px}
   #tasten{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-  #tasten button{height:clamp(52px,9.2vh,78px);border:1px solid var(--rand);border-radius:20px;background:var(--taste);color:var(--text);font:inherit;font-size:26px;cursor:pointer;touch-action:manipulation}
-  #tasten button.op{background:var(--taste2);color:var(--akzent);font-size:28px}
-  #tasten button.gleich{background:var(--akzent);color:var(--akzentText);font-weight:600}
-  #tasten button:active{filter:brightness(1.25);transform:scale(.97)}
-  #verlauf{position:fixed;inset:0;background:var(--hg);display:none;flex-direction:column;padding:10px 14px 16px;max-width:560px;margin:0 auto}
-  #verlauf.offen{display:flex}
+  .wissAn #tasten{gap:7px}
+  .tasten button{height:clamp(52px,9.2vh,78px);border:1px solid var(--rand);border-radius:20px;background:var(--taste);color:var(--text);font-size:26px;cursor:pointer;touch-action:manipulation}
+  .wissAn #tasten button{height:clamp(44px,7vh,62px);font-size:23px}
+  .tasten button.op{background:var(--taste2);color:var(--akzent);font-size:28px}
+  .tasten button.rot{color:var(--rot)}
+  .tasten button.gleich{background:var(--akzent);color:var(--akzentText);font-weight:600}
+  .tasten button:active,#wiss button:active{filter:brightness(1.25);transform:scale(.97)}
+
+  /* Seiten */
+  .seite{position:fixed;inset:0;background:var(--hg);display:none;z-index:3}
+  .seite.offen{display:block}
   #liste{flex:1;overflow:auto;margin-top:8px}
   .eintrag{padding:12px 6px;border-bottom:1px solid var(--rand);text-align:right;cursor:pointer}
   .eintrag small{display:block;color:var(--leise);font-size:15px;word-break:break-all}
   .eintrag b{font-size:24px;font-weight:600}
   .leer{color:var(--leise);text-align:center;padding:40px 0}
-  #hinweis{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--text);color:var(--hg);padding:9px 16px;border-radius:999px;font-size:14px;opacity:0;transition:.2s;pointer-events:none}
+
+  /* Maßwandler */
+  #arten{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;border-bottom:1px solid var(--rand);scrollbar-width:none}
+  #arten::-webkit-scrollbar{display:none}
+  #arten button{flex:0 0 auto;border:0;background:none;color:var(--leise);padding:9px 14px;border-radius:999px;font-size:15px;cursor:pointer;white-space:nowrap}
+  #arten button.an{background:var(--taste2);color:var(--text);font-weight:600}
+  .feld{padding:12px 6px 10px;border-bottom:1px solid var(--rand);cursor:pointer;border-left:3px solid transparent}
+  .feld.aktiv{border-left-color:var(--akzent);background:linear-gradient(90deg,rgba(56,189,248,.08),transparent 60%)}
+  .feld select{background:var(--taste);border:1px solid var(--rand);border-radius:10px;padding:7px 10px;font-size:16px;max-width:100%}
+  .feld .wert{text-align:right;font-size:40px;font-weight:500;margin-top:8px;word-break:break-all;line-height:1.15}
+  .feld .wert small{font-size:18px;color:var(--leise);margin-left:6px;font-weight:400}
+  .feld.aktiv .wert{color:var(--text)}.feld:not(.aktiv) .wert{color:var(--leise)}
+  #formel{color:var(--leise);font-size:13.5px;text-align:center;padding:8px 4px;flex:1;display:flex;align-items:flex-start;justify-content:center}
+  #wTasten button.blau{background:var(--akzent);color:var(--akzentText)}
+  #hinweis{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--text);color:var(--hg);padding:9px 16px;border-radius:999px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:9}
   #hinweis.an{opacity:1}
 </style>
 </head>
 <body>
-<div id="app">
-  <div class="kopf"><h1>Rechner</h1><button id="bVerlauf" type="button">🕘 Verlauf</button></div>
+<!-- ===== Rechner ===== -->
+<div class="app" id="rechner">
+  <div class="kopf">
+    <button class="ik" id="bVerlauf" title="Verlauf" aria-label="Verlauf"><svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 4v4h4"/><path d="M12 7.5V12l3 2"/></svg></button>
+    <div class="rechts">
+      <button class="ik" id="bWandler" title="Maßwandler" aria-label="Maßwandler öffnen"><svg viewBox="0 0 24 24"><rect x="2.5" y="7.5" width="19" height="9" rx="2" transform="rotate(-35 12 12)"/><path d="M8.2 9.6l1.3 1.8M10.7 7.8l1.9 2.6M13.2 6l1.3 1.8M7.9 13.4l1.3 1.8" transform="translate(-.4 1.2)"/></svg></button>
+      <button class="ik" id="bWiss" title="Wissenschaftlich" aria-label="Wissenschaftliche Tasten"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M6.5 12.5l2 3.5 3.5-9h5.5"/></svg></button>
+    </div>
+  </div>
   <div id="anzeige" title="Tippen kopiert das Ergebnis">
+    <div id="modus"></div>
     <div id="ausdruck"></div>
     <div id="ergebnis">0</div>
   </div>
-  <div id="tasten">
-    <button data-k="C" class="op">C</button><button data-k="back" class="op" aria-label="Löschen">⌫</button><button data-k="%" class="op">%</button><button data-k="÷" class="op">÷</button>
+  <div id="wiss">
+    <button data-k="deg" class="deg" id="bDeg">DEG</button><button data-k="sin">sin</button><button data-k="cos">cos</button><button data-k="tan">tan</button><button data-k="π">π</button>
+    <button data-k="ln">ln</button><button data-k="log">log</button><button data-k="√">√</button><button data-k="^2">x²</button><button data-k="^">xʸ</button>
+    <button data-k="e">e</button><button data-k="!">x!</button><button data-k="inv">1/x</button><button data-k="ex">eˣ</button><button data-k="10x">10ˣ</button>
+  </div>
+  <div id="tasten" class="tasten">
+    <button data-k="C" class="op rot">C</button><button data-k="back" class="op" aria-label="Löschen">⌫</button><button data-k="%" class="op">%</button><button data-k="÷" class="op">÷</button>
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="×" class="op">×</button>
     <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="−" class="op">−</button>
     <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="+" class="op">+</button>
     <button data-k="()" class="op">( )</button><button data-k="0">0</button><button data-k=",">,</button><button data-k="=" class="gleich">=</button>
   </div>
 </div>
-<div id="verlauf">
-  <div class="kopf"><button id="bZurueck" type="button">← Zurück</button><button id="bLeeren" type="button">Verlauf löschen</button></div>
+
+<!-- ===== Verlauf ===== -->
+<div class="seite" id="verlauf"><div class="app">
+  <div class="kopf"><button class="knopf" id="bZurueck">← Zurück</button><button class="knopf" id="bLeeren">Verlauf löschen</button></div>
   <div id="liste"></div>
-</div>
+</div></div>
+
+<!-- ===== Maßwandler ===== -->
+<div class="seite" id="wandler"><div class="app">
+  <div class="kopf"><button class="ik" id="bWZurueck" aria-label="Zurück zum Rechner"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Maßwandler</h1></div>
+  <div id="arten"></div>
+  <div class="feld aktiv" id="f0"><select id="e0" aria-label="Einheit oben"></select><div class="wert" id="w0"></div></div>
+  <div class="feld" id="f1"><select id="e1" aria-label="Einheit unten"></select><div class="wert" id="w1"></div></div>
+  <div id="formel"></div>
+  <div id="wTasten" class="tasten" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+    <button data-w="7">7</button><button data-w="8">8</button><button data-w="9">9</button><button data-w="C" class="op rot">C</button>
+    <button data-w="4">4</button><button data-w="5">5</button><button data-w="6">6</button><button data-w="back" class="op" aria-label="Löschen">⌫</button>
+    <button data-w="1">1</button><button data-w="2">2</button><button data-w="3">3</button><button data-w="tausch" class="op" title="Einheiten tauschen" aria-label="Einheiten tauschen">⇅</button>
+    <button data-w="pm" class="op">+/−</button><button data-w="0">0</button><button data-w=",">,</button><button data-w="feld" class="blau" title="Anderes Feld eingeben" aria-label="Anderes Feld eingeben">↑↓</button>
+  </div>
+</div></div>
+
 <div id="hinweis"></div>
 <script>
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
-let ausdruck="", fertig=false, verlauf=[];
+let ausdruck="", fertig=false, verlauf=[], grad=true, wissAn=false;
 try{ verlauf=JSON.parse(localStorage.getItem("rechner-verlauf"))||[]; }catch(e){}
+try{ wissAn=localStorage.getItem("rechner-wiss")==="1"; grad=localStorage.getItem("rechner-rad")!=="1"; }catch(e){}
 
 /* ---------- Rechnen (eigener Parser, kein eval) ---------- */
+const FUNK=["sin","cos","tan","ln","log","√"];
+const rund=x=>Math.round(x*1e12)/1e12;
+function fak(n){ if(n<0||n!==Math.floor(n)) throw new Error("Eingabe"); if(n>170) throw new Error("gross"); let r=1; for(let i=2;i<=n;i++) r*=i; return r; }
+function anwenden(f,x){
+  const w=grad?x*Math.PI/180:x;
+  switch(f){
+    case "sin": return rund(Math.sin(w));
+    case "cos": return rund(Math.cos(w));
+    case "tan": { const c=rund(Math.cos(w)); if(c===0) throw new Error("gross"); return rund(Math.tan(w)); }
+    case "ln": if(x<=0) throw new Error("Eingabe"); return Math.log(x);
+    case "log": if(x<=0) throw new Error("Eingabe"); return Math.log10(x);
+    case "√": if(x<0) throw new Error("Eingabe"); return Math.sqrt(x);
+  }
+}
+function abschneiden(t){                                         // unfertiges Ende entfernen
+  let s=t, alt;
+  do{ alt=s; s=s.replace(/[+−×÷,^]+$/,"").replace(/(sin|cos|tan|ln|log|√)?\($/,""); }while(s!==alt);
+  return s;
+}
+function schliessen(s){ const o=(s.match(/\(/g)||[]).length-(s.match(/\)/g)||[]).length; if(o<0) throw new Error("Klammer"); return s+")".repeat(o); }
 function berechne(text){
-  let s=text.replace(/[+−×÷(,]+$/,"");                       // unfertiges Ende abschneiden
-  const offen=(s.match(/\(/g)||[]).length-(s.match(/\)/g)||[]).length;
-  if(offen<0) throw new Error("Klammer"); s+=")".repeat(offen);
-  const tok=s.match(/\d+(?:,\d*)?|[+−×÷()%]/g)||[]; let i=0;
+  const s=schliessen(abschneiden(text));
+  const tok=s.match(/\d+(?:,\d*)?|sin|cos|tan|ln|log|√|π|e|[+−×÷()%!^]/g)||[]; let i=0;
   if(!tok.length) return null;
-  const faktor=()=>{
-    if(tok[i]==="−"){ i++; const f=faktor(); return {v:-f.v,roh:-f.roh,pz:f.pz}; }
-    let v;
-    if(tok[i]==="("){ i++; v=summe(); if(tok[i]!==")") throw new Error("Klammer"); i++; }
-    else if(/^\d/.test(tok[i]||"")){ v=parseFloat(tok[i++].replace(",",".")); }
-    else throw new Error("Eingabe");
-    let roh=v, pz=false;
-    while(tok[i]==="%"){ i++; roh=v; v=v/100; pz=true; }
+  const istStart=t=>t!==undefined&&(/^\d/.test(t)||t==="("||t==="π"||t==="e"||FUNK.includes(t));
+  function primaer(){
+    const t=tok[i];
+    if(t==="("){ i++; const v=summe(); if(tok[i]!==")") throw new Error("Klammer"); i++; return v; }
+    if(t==="π"){ i++; return Math.PI; }
+    if(t==="e"){ i++; return Math.E; }
+    if(FUNK.includes(t)){ i++;
+      if(tok[i]==="("){ i++; const v=summe(); if(tok[i]!==")") throw new Error("Klammer"); i++; return anwenden(t,v); }
+      return anwenden(t,potenz().v);
+    }
+    if(/^\d/.test(t||"")){ i++; return parseFloat(t.replace(",",".")); }
+    throw new Error("Eingabe");
+  }
+  function nachgestellt(){                                        // ! und %
+    let v=primaer(), roh=v, pz=false;
+    for(;;){
+      if(tok[i]==="!"){ i++; v=fak(v); roh=v; pz=false; }
+      else if(tok[i]==="%"){ i++; roh=v; v=v/100; pz=true; }
+      else break;
+    }
     return {v,roh,pz};
-  };
-  const produkt=()=>{
+  }
+  function potenz(){
+    const b=nachgestellt();
+    if(tok[i]==="^"){ i++; const e=faktor().v; const v=Math.pow(b.v,e); if(isNaN(v)) throw new Error("Eingabe"); return {v,roh:v,pz:false}; }
+    return b;
+  }
+  function faktor(){
+    if(tok[i]==="−"){ i++; const f=faktor(); return {v:-f.v,roh:-f.roh,pz:f.pz}; }
+    return potenz();
+  }
+  function produkt(){
     let f=faktor(), v=f.v, pz=f.pz, roh=f.roh;
     for(;;){
       if(tok[i]==="×"){ i++; v*=faktor().v; pz=false; }
       else if(tok[i]==="÷"){ i++; const d=faktor().v; if(d===0) throw new Error("null"); v/=d; pz=false; }
-      else if(tok[i]==="("||(/^\d/.test(tok[i]||""))){ v*=faktor().v; pz=false; }   // 2(3+4) = 2×(3+4)
+      else if(istStart(tok[i])){ v*=faktor().v; pz=false; }       // 2π, 2(3+4), 3sin(30)
       else break;
     }
     return {v,roh,pz};
-  };
+  }
   function summe(){
     let l=produkt().v;
     while(tok[i]==="+"||tok[i]==="−"){
@@ -104,21 +206,24 @@ function berechne(text){
     return l;
   }
   const erg=summe(); if(i<tok.length) throw new Error("Eingabe");
+  if(isNaN(erg)) throw new Error("Eingabe");
   if(!isFinite(erg)) throw new Error("gross");
   return Number(erg.toPrecision(12));
 }
-window.__rechne=berechne;
+window.__rechne=(t,rad)=>{ const g=grad; grad=!rad; try{ return berechne(t); } finally{ grad=g; } };
 
 /* ---------- Anzeige ---------- */
 const gruppe=z=>z.replace(/\B(?=(\d{3})+(?!\d))/g,".");
 const schoen=t=>t.replace(/(\d+)(,\d*)?/g,(m,g,d)=>gruppe(g)+(d||"")).replace(/([+−×÷])/g," $1 ");
-function zahlText(x){                                           // Zahl -> "1234,5" (ohne Tausenderpunkte)
+function zahlText(x){
   if(Math.abs(x)>=1e15) return null;
+  if(x!==0&&Math.abs(x)<1e-10) return "0";
   let t=x.toLocaleString("en-US",{useGrouping:false,maximumFractionDigits:10});
   return t.replace("-","−").replace(".",",");
 }
 function zeigen(){
   const a=$("ausdruck"), e=$("ergebnis"); e.className="";
+  $("modus").textContent=wissAn?(grad?"Grad (DEG)":"Bogenmaß (RAD)"):"";
   if(fertig){ a.textContent=schoen(fertig)+" ="; e.textContent=schoen(ausdruck); }
   else{
     a.textContent=schoen(ausdruck);
@@ -133,43 +238,54 @@ function zeigen(){
   a.scrollTop=a.scrollHeight;
 }
 function fehler(t){ const e=$("ergebnis"); e.className="fehler"; e.style.fontSize=""; e.textContent=t; }
+function wissSetzen(){
+  document.body.classList.toggle("wissAn",wissAn); $("bWiss").classList.toggle("an",wissAn);
+  $("bDeg").textContent=grad?"DEG":"RAD"; zeigen();
+}
 
 /* ---------- Eingabe ---------- */
 const letztes=()=>ausdruck.slice(-1);
-const istOp=c=>"+−×÷".includes(c)&&c!=="";
+const istOp=c=>c!==""&&"+−×÷^".includes(c);
+const endetWert=()=>/[\d)%!πe]$/.test(ausdruck);                // danach wäre "×" nötig
 function taste(k){
   if(k==="C"){ ausdruck=""; fertig=false; return zeigen(); }
   if(k==="="){ return gleich(); }
+  if(k==="deg"){ grad=!grad; try{localStorage.setItem("rechner-rad",grad?"0":"1");}catch(e){} return wissSetzen(); }
   if(fertig){                                                    // nach "=": Zahl beginnt neu, Rechenzeichen rechnet weiter
-    if(/[\d,]/.test(k)||k==="()") ausdruck="";
+    if(/[\d,]/.test(k)||k==="()"||FUNK.includes(k)||k==="π"||k==="e"||k==="ex"||k==="10x") ausdruck="";
     fertig=false;
   }
   const l=letztes();
-  if(k==="back"){ ausdruck=ausdruck.slice(0,-1); }
-  else if(/\d/.test(k)){
-    if(l===")"||l==="%") ausdruck+="×";
-    if(/(^|[^\d,])0$/.test(ausdruck)) ausdruck=ausdruck.slice(0,-1);   // führende Null ersetzen
+  if(k==="back"){ const m=ausdruck.match(/(sin|cos|tan|ln|log|√)\($/); ausdruck=m?ausdruck.slice(0,-m[0].length):ausdruck.slice(0,-1); }
+  else if(/^\d$/.test(k)){
+    if(/[)%!πe]$/.test(ausdruck)) ausdruck+="×";
+    if(/(^|[^\d,])0$/.test(ausdruck)) ausdruck=ausdruck.slice(0,-1);
     if((ausdruck.match(/\d+(,\d*)?$/)||[""])[0].replace(",","").length>=15) return;
     ausdruck+=k;
   }
   else if(k===","){
     const z=(ausdruck.match(/\d+(,\d*)?$/)||[""])[0];
     if(z.includes(",")) return;
-    if(!z){ if(l===")"||l==="%") ausdruck+="×"; ausdruck+="0"; }
+    if(!z){ if(endetWert()) ausdruck+="×"; ausdruck+="0"; }
     ausdruck+=",";
   }
-  else if(istOp(k)){
+  else if("+−×÷".includes(k)){
     if(l===",") ausdruck=ausdruck.slice(0,-1);
     const l2=letztes();
     if(!ausdruck||l2==="("){ if(k==="−") ausdruck+="−"; }
-    else if(istOp(l2)){ if(ausdruck.length>1&&ausdruck.slice(-2,-1)!=="(") ausdruck=ausdruck.slice(0,-1)+k; }
+    else if(istOp(l2)){ if(k==="−"&&l2!=="−") ausdruck+="−"; else if(ausdruck.length>1&&ausdruck.slice(-2,-1)!=="(") ausdruck=ausdruck.slice(0,-1)+k; }
     else ausdruck+=k;
   }
-  else if(k==="%"){ if(/[\d)]/.test(l)) ausdruck+="%"; }
+  else if(k==="%"||k==="!"){ if(endetWert()) ausdruck+=k; }
+  else if(k==="^2"||k==="^"){ if(endetWert()) ausdruck+=k; }
+  else if(k==="inv"){ if(endetWert()) ausdruck+="^(−1)"; }
+  else if(FUNK.includes(k)){ if(l===",") ausdruck=ausdruck.slice(0,-1); if(endetWert()) ausdruck+="×"; ausdruck+=k+"("; }
+  else if(k==="π"||k==="e"){ if(l===",") ausdruck=ausdruck.slice(0,-1); if(endetWert()) ausdruck+="×"; ausdruck+=k; }
+  else if(k==="ex"||k==="10x"){ if(endetWert()) ausdruck+="×"; ausdruck+=(k==="ex"?"e":"10")+"^("; }
   else if(k==="()"){
     const offen=(ausdruck.match(/\(/g)||[]).length-(ausdruck.match(/\)/g)||[]).length;
-    if(offen>0&&/[\d)%]/.test(l)) ausdruck+=")";
-    else{ if(l===",") ausdruck=ausdruck.slice(0,-1); if(/[\d)%]/.test(letztes())) ausdruck+="×"; ausdruck+="("; }
+    if(offen>0&&endetWert()) ausdruck+=")";
+    else{ if(l===",") ausdruck=ausdruck.slice(0,-1); if(endetWert()) ausdruck+="×"; ausdruck+="("; }
   }
   zeigen();
 }
@@ -177,32 +293,35 @@ function gleich(){
   if(fertig||!ausdruck) return;
   let v;
   try{ v=berechne(ausdruck); }
-  catch(e){ return fehler(e.message==="null"?"Durch 0 teilen geht nicht":e.message==="gross"?"Zahl zu groß":"Eingabe unvollständig"); }
+  catch(e){ return fehler(e.message==="null"?"Durch 0 teilen geht nicht":e.message==="gross"?"Zahl zu groß":"Ungültige Eingabe"); }
   if(v===null) return;
   const t=zahlText(v); if(t===null) return fehler("Zahl zu groß");
-  let s=ausdruck.replace(/[+−×÷(,]+$/,""); const offen=(s.match(/\(/g)||[]).length-(s.match(/\)/g)||[]).length; s+=")".repeat(Math.max(0,offen));
+  let s; try{ s=schliessen(abschneiden(ausdruck)); }catch(e){ s=ausdruck; }
   if(s!==t){ verlauf.unshift({a:s,e:t}); verlauf=verlauf.slice(0,60); try{localStorage.setItem("rechner-verlauf",JSON.stringify(verlauf));}catch(e){} }
   fertig=s; ausdruck=t; zeigen();
 }
 $("tasten").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) taste(b.dataset.k); });
-let lang=null; const bk=document.querySelector('[data-k="back"]');                 // ⌫ lange halten = alles löschen
+$("wiss").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) taste(b.dataset.k); });
+let lang=null; const bk=document.querySelector('#tasten [data-k="back"]');   // ⌫ lange halten = alles löschen
 bk.addEventListener("pointerdown",()=>{ lang=setTimeout(()=>taste("C"),550); });
 ["pointerup","pointerleave","pointercancel"].forEach(n=>bk.addEventListener(n,()=>clearTimeout(lang)));
+$("bWiss").onclick=()=>{ wissAn=!wissAn; try{localStorage.setItem("rechner-wiss",wissAn?"1":"0");}catch(e){} wissSetzen(); };
 
 window.addEventListener("keydown",e=>{
-  const k=e.key, map={"*":"×","x":"×","/":"÷",":":"÷","-":"−",".":",","Enter":"=","Backspace":"back","Escape":"C","Delete":"C"};
+  if($("wandler").classList.contains("offen")) return wTaste(e);
+  const k=e.key, map={"*":"×","x":"×","/":"÷",":":"÷","-":"−",".":",","Enter":"=","Backspace":"back","Escape":"C","Delete":"C","^":"^","!":"!","p":"π"};
   let t=null;
   if(/^\d$/.test(k)||"+,%=".includes(k)) t=k; else if(map[k]) t=map[k];
-  else if(k==="("||k===")"){ if(fertig){ausdruck="";fertig=false;} if(k==="("){ if(/[\d)%]/.test(letztes()))ausdruck+="×"; ausdruck+="("; } else if(/[\d)%]/.test(letztes())) ausdruck+=")"; zeigen(); e.preventDefault(); return; }
+  else if(k==="("||k===")"){ if(fertig){ausdruck="";fertig=false;} if(k==="("){ if(endetWert())ausdruck+="×"; ausdruck+="("; } else if(endetWert()) ausdruck+=")"; zeigen(); e.preventDefault(); return; }
   if(t){ e.preventDefault(); taste(t); }
 });
 
 /* ---------- Kopieren und Verlauf ---------- */
 function hinweis(t){ const h=$("hinweis"); h.textContent=t; h.classList.add("an"); setTimeout(()=>h.classList.remove("an"),1500); }
-$("anzeige").addEventListener("click",async()=>{
+async function kopiere(t){ try{ await navigator.clipboard.writeText(t); hinweis("Kopiert"); }catch(e){} }
+$("anzeige").addEventListener("click",()=>{
   let t=fertig?ausdruck:null; if(!t){ try{ const v=berechne(ausdruck); if(v!==null) t=zahlText(v); }catch(e){} }
-  if(!t) return;
-  try{ await navigator.clipboard.writeText(schoen(t).replace("−","-")); hinweis("Ergebnis kopiert"); }catch(e){}
+  if(t) kopiere(schoen(t).replace("−","-"));
 });
 function listeZeigen(){
   const l=$("liste");
@@ -214,7 +333,87 @@ function listeZeigen(){
 $("bVerlauf").addEventListener("click",()=>{ listeZeigen(); $("verlauf").classList.add("offen"); });
 $("bZurueck").addEventListener("click",()=>$("verlauf").classList.remove("offen"));
 $("bLeeren").addEventListener("click",()=>{ verlauf=[]; try{localStorage.removeItem("rechner-verlauf");}catch(e){} listeZeigen(); });
-zeigen();
+
+/* ================= Maßwandler ================= */
+// Jede Einheit: [Name, Kurzzeichen, Faktor zur Grundeinheit]
+const ARTEN={
+  "Länge":[["Millimeter","mm",.001],["Zentimeter","cm",.01],["Meter","m",1],["Kilometer","km",1000],["Zoll","in",.0254],["Fuß","ft",.3048],["Yard","yd",.9144],["Meile","mi",1609.344],["Seemeile","sm",1852]],
+  "Fläche":[["Quadratmillimeter","mm²",1e-6],["Quadratzentimeter","cm²",1e-4],["Quadratmeter","m²",1],["Ar","a",100],["Hektar","ha",1e4],["Quadratkilometer","km²",1e6],["Quadratzoll","in²",.00064516],["Quadratfuß","ft²",.09290304],["Acre","ac",4046.8564224]],
+  "Volumen":[["Milliliter","ml",.001],["Zentiliter","cl",.01],["Deziliter","dl",.1],["Liter","l",1],["Kubikzentimeter","cm³",.001],["Kubikmeter","m³",1000],["Teelöffel","TL",.005],["Esslöffel","EL",.015],["Tasse","Tasse",.25],["US-Gallone","gal (US)",3.785411784],["UK-Gallone","gal (UK)",4.54609],["US-Flüssigunze","fl oz",.0295735295625]],
+  "Gewicht":[["Milligramm","mg",1e-6],["Gramm","g",.001],["Kilogramm","kg",1],["Tonne","t",1000],["Pfund (500 g)","Pfd",.5],["Zentner (50 kg)","Ztr",50],["Pfund (englisch)","lb",.45359237],["Unze","oz",.028349523125]],
+  "Temperatur":[["Celsius","°C"],["Fahrenheit","°F"],["Kelvin","K"]],
+  "Geschwindigkeit":[["Meter pro Sekunde","m/s",1],["Kilometer pro Stunde","km/h",1/3.6],["Meilen pro Stunde","mph",.44704],["Knoten","kn",1852/3600],["Fuß pro Sekunde","ft/s",.3048]],
+  "Zeit":[["Millisekunde","ms",.001],["Sekunde","s",1],["Minute","min",60],["Stunde","h",3600],["Tag","Tag",86400],["Woche","Wo",604800],["Monat (Ø 30,44 Tage)","Mon",2629746],["Jahr (365,25 Tage)","J",31557600]],
+  "Daten":[["Bit","bit",.125],["Byte","B",1],["Kilobyte","KB",1e3],["Megabyte","MB",1e6],["Gigabyte","GB",1e9],["Terabyte","TB",1e12],["Kibibyte","KiB",1024],["Mebibyte","MiB",1048576],["Gibibyte","GiB",1073741824]],
+  "Leistung":[["Watt","W",1],["Kilowatt","kW",1000],["Pferdestärke","PS",735.49875],["Horsepower","hp",745.699872]],
+  "Energie":[["Joule","J",1],["Kilojoule","kJ",1000],["Kalorie","cal",4.184],["Kilokalorie","kcal",4184],["Wattstunde","Wh",3600],["Kilowattstunde","kWh",3.6e6]],
+  "Druck":[["Pascal","Pa",1],["Hektopascal","hPa",100],["Millibar","mbar",100],["Bar","bar",1e5],["PSI","psi",6894.757293168],["Atmosphäre","atm",101325]]
+};
+const START={"Länge":[4,1],"Fläche":[2,4],"Volumen":[3,0],"Gewicht":[2,6],"Temperatur":[0,1],"Geschwindigkeit":[1,2],"Zeit":[3,2],"Daten":[4,3],"Leistung":[1,2],"Energie":[3,5],"Druck":[3,4]};
+let art="Länge", wahl={}, eingabe="1", aktiv=0;
+try{ const s=JSON.parse(localStorage.getItem("rechner-wandler")); if(s&&ARTEN[s.art]){ art=s.art; wahl=s.wahl||{}; } }catch(e){}
+const einheiten=()=>wahl[art]||START[art].slice();
+function inGrund(v,u){ if(art!=="Temperatur") return v*ARTEN[art][u][2]; return u===0?v:u===1?(v-32)*5/9:v-273.15; }
+function ausGrund(v,u){ if(art!=="Temperatur") return v/ARTEN[art][u][2]; return u===0?v:u===1?v*9/5+32:v+273.15; }
+function wandle(v,von,nach){ return ausGrund(inGrund(v,von),nach); }
+function wText(x){
+  if(!isFinite(x)) return "–";
+  if(x===0) return "0";
+  const a=Math.abs(x);
+  if(a>=1e15||a<1e-6){ return x.toExponential(6).replace(/\.?0+e/,"e").replace(".",",").replace("e+"," × 10^").replace("e-"," × 10^−").replace("-","−"); }
+  const t=Number(x.toPrecision(10)).toLocaleString("en-US",{useGrouping:false,maximumFractionDigits:8});
+  const [g,d]=t.replace("-","").split("."); return (x<0?"−":"")+gruppe(g)+(d?","+d:"");
+}
+function eText(t){ const neg=t.startsWith("−"); const [g,d]=t.replace("−","").split(","); return (neg?"−":"")+gruppe(g||"0")+(d!==undefined?","+d:""); }
+function eWert(){ const v=parseFloat(eingabe.replace("−","-").replace(",",".")); return isNaN(v)?0:v; }
+function wSpeichern(){ try{ localStorage.setItem("rechner-wandler",JSON.stringify({art,wahl})); }catch(e){} }
+function arten(){
+  const b=$("arten"); b.innerHTML="";
+  Object.keys(ARTEN).forEach(a=>{ const x=document.createElement("button"); x.textContent=a; if(a===art)x.className="an";
+    x.onclick=()=>{ art=a; eingabe="1"; aktiv=0; wSpeichern(); arten(); wZeigen(); x.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"}); }; b.append(x); });
+}
+function selFuellen(){
+  const u=einheiten();
+  [0,1].forEach(n=>{ const s=$("e"+n); s.innerHTML=""; ARTEN[art].forEach((e,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent=e[0]+" ("+e[1]+")"; s.append(o); }); s.value=u[n]; });
+}
+function wZeigen(){
+  selFuellen();
+  const u=einheiten(), v=eWert(), anders=wandle(v,u[aktiv],u[1-aktiv]);
+  [0,1].forEach(n=>{
+    const w=$("w"+n); w.innerHTML=""; w.append(document.createTextNode(n===aktiv?eText(eingabe):wText(anders)));
+    const s=document.createElement("small"); s.textContent=ARTEN[art][u[n]][1]; w.append(s);
+    $("f"+n).classList.toggle("aktiv",n===aktiv);
+  });
+  $("formel").textContent="1 "+ARTEN[art][u[0]][1]+" = "+wText(wandle(1,u[0],u[1]))+" "+ARTEN[art][u[1]][1]+(art==="Temperatur"?"":"   ·   1 "+ARTEN[art][u[1]][1]+" = "+wText(wandle(1,u[1],u[0]))+" "+ARTEN[art][u[0]][1]);
+}
+[0,1].forEach(n=>{
+  $("e"+n).addEventListener("change",e=>{ const u=einheiten(); u[n]=+e.target.value; wahl[art]=u; wSpeichern(); wZeigen(); });
+  $("f"+n).addEventListener("click",e=>{ if(e.target.tagName==="SELECT"||n===aktiv) return; feldWechsel(); });
+  $("w"+n).addEventListener("dblclick",()=>{ kopiere($("w"+n).firstChild.textContent.replace(/\./g,"").replace("−","-")); });
+});
+function feldWechsel(){ const u=einheiten(); const wert=wandle(eWert(),u[aktiv],u[1-aktiv]); aktiv=1-aktiv; eingabe=Number(wert.toPrecision(10)).toString().replace("-","−").replace(".",","); if(/e/.test(eingabe)) eingabe="0"; wZeigen(); }
+function wDruck(k){
+  if(/^\d$/.test(k)){ if(eingabe==="0")eingabe=k; else if(eingabe==="−0")eingabe="−"+k; else if(eingabe.replace(/[−,]/g,"").length<15) eingabe+=k; }
+  else if(k===","){ if(!eingabe.includes(",")) eingabe+=","; }
+  else if(k==="back"){ eingabe=eingabe.slice(0,-1); if(eingabe===""||eingabe==="−") eingabe="0"; }
+  else if(k==="C"){ eingabe="0"; }
+  else if(k==="pm"){ eingabe=eingabe.startsWith("−")?eingabe.slice(1):"−"+eingabe; }
+  else if(k==="tausch"){ const u=einheiten(); wahl[art]=[u[1],u[0]]; wSpeichern(); }
+  else if(k==="feld"){ return feldWechsel(); }
+  wZeigen();
+}
+$("wTasten").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) wDruck(b.dataset.w); });
+function wTaste(e){
+  const k=e.key; let t=null;
+  if(/^\d$/.test(k)) t=k; else if(k===","||k===".") t=","; else if(k==="Backspace") t="back"; else if(k==="Delete") t="C"; else if(k==="-") t="pm";
+  else if(k==="Escape"){ $("wandler").classList.remove("offen"); return; } else if(k==="Tab"||k==="ArrowUp"||k==="ArrowDown") t="feld";
+  if(t&&e.target.tagName!=="SELECT"){ e.preventDefault(); wDruck(t); }
+}
+$("bWandler").onclick=()=>{ arten(); wZeigen(); $("wandler").classList.add("offen"); const a=document.querySelector("#arten .an"); if(a) a.scrollIntoView({inline:"center",block:"nearest"}); };
+$("bWZurueck").onclick=()=>$("wandler").classList.remove("offen");
+window.__wandle=(a,v,von,nach)=>{ const alt=art; art=a; try{ return wandle(v,von,nach); } finally{ art=alt; } };
+
+wissSetzen();
 })();
 </script>
 </body>
